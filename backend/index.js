@@ -3,6 +3,8 @@ const jwt     = require('jsonwebtoken');
 const express = require('express'); 
 const app     = express(); 
 const port    = process.env.PORT
+const db      = require("db");
+
 
 app.use(express.json());
  
@@ -45,19 +47,48 @@ function verifyJWT(req, res, next){
     });
 }
 
-app.get('/list', verifyJWT, (req, res, next) => { 
-    console.log("Retornou todos eventos!");
-    res.json([{id:1, nome:'Evento musical'}]);
+app.get('/list', verifyJWT, async (req, res, next) => { 
+    
+    let eventos = await db.findAllEvents()
+    console.log(eventos);
+    res.json(eventos);
 })
 
-app.post('/save', verifyJWT, (req, res, next) => { 
-  console.log("Retornou todos eventos!");
-  res.json([{id:1, nome:'Evento musical'}]);
+app.post('/insert', verifyJWT, async (req, res, next) => { 
+    try {
+
+        const nome   = req.nome;
+        const result = await db.insert({ nome });
+        console.log(result);
+        res.redirect('/list');
+      } catch (err) {
+        next(err);
+      }
 })
 
-app.post('/delete', verifyJWT, (req, res, next) => { 
-    console.log("Retornou todos eventos!");
-    res.json([{id:1, nome:'Evento musical'}]);
+app.post('/update/:id', verifyJWT, async(req, res, next) => { 
+    const id = req.id;
+    const nome = req.nome;
+    try {
+        const result = await db.update(id, { nome });
+        console.log(result);
+        res.redirect('/list');
+      } catch (err) {
+        next(err);
+      }
+    // res.json([{id:1, nome:'Evento musical'}]);
+})
+  
+app.post('/delete/:id', verifyJWT, async (req, res, next) => { 
+    const id = req.params.id;
+
+  try {
+    const result = await db.deleteOne(id);
+    console.log(result);
+    res.redirect('/list');
+  } catch (err) {
+    next(err);
+  }
 })
 
 app.listen(port, () => console.log(`Servidor escutando na porta ${port}...`));
